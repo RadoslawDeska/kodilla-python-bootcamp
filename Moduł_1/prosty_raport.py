@@ -62,7 +62,7 @@ def print_receit(basket: dict, decimal_point=","):
     print("#","#",sep=" "*38)
     print(''.join((
         "# Suma PLN",
-        f"{basket_total}".rjust(len(line)-13), # 8 stands for length of left-most text
+        f"{basket_total}".rjust(len(line)-13), # 13 stands for length of left-most text and #-based formatting
         "#".rjust(3))).replace(".", decimal_point))  
     print("#","#",sep=" "*38)
     print("#"*40)

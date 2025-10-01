@@ -1,0 +1,11 @@
+Raport z zakupów:
+roquefo   2,000 kg    25,00 zł
+stilton   1,000 kg    11,24 zł
+brie      1,000 kg     9,30 zł
+gouda     1,000 kg     8,55 zł
+edam      1,000 kg    11,00 zł
+parmeza   3,500 kg    57,75 zł
+mozzare   1,300 kg    18,20 zł
+ser owc   2,200 kg   269,10 zł
+listek    0,200 kg    20,00 zł
+Suma zł:                430,14

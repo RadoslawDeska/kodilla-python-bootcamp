@@ -1,3 +1,4 @@
+# PIERWSZY SPOSÓB
 rng = range(1, 101)
 for i in rng:
     if i % 3 == 0:
@@ -8,3 +9,15 @@ for i in rng:
             break
         else:
             print(i, end=', ')
+
+# DRUGI SPOSÓB
+i = min(rng)
+while True:
+    if i % 3 == 0:
+        if i+3 > max(rng):
+            print(i)
+            # No need to continue the loop
+            break
+        else:
+            print(i, end=', ')
+    i += 1

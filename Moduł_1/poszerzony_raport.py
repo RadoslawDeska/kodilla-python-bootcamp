@@ -67,7 +67,7 @@ def generate_receipt(basket: dict, max_len: int):
         yield line
     yield f"{summary}{basket_total:>{max_len - len(summary)}.2f}"
 
-def format_receipt(basket: dict, decimal_point=",", max_len=40) -> str:
+def format_receipt(basket: dict, decimal_point=",", max_len=40):
     if decimal_point not in [",", "."]:
         raise Exception("Invalid decimal point.")
     

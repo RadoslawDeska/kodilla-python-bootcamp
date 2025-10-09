@@ -169,11 +169,7 @@ def _format_receipt(basket: dict, decimal_point=",", max_width=40):
     if decimal_point not in [",", "."]:
         raise Exception("Invalid decimal point.")
     
-    lines = ["Raport z zakupów:"]
-    for line in _products_listing(basket, max_width=max_width):
-        lines.append(line.replace(".", decimal_point))
-    
-    return lines
+    return list(_products_listing(basket, max_width=max_width, decimal_point=decimal_point))
 
 def receipt_to_string(lines) -> str:
     return "\n".join(lines)
@@ -202,6 +198,8 @@ def test_products_listing(basket, max_width=40):
     test_positive = True
     
     for i, line in enumerate(receipt):
+        if i==0:
+            continue  # Skip the header line
         try:
             assert len(line) == max_width
         except AssertionError:
@@ -242,7 +240,7 @@ if __name__ == "__main__":
     # Czy _format_column zwraca string lub podnosi wyjątek InvalidArgument przy niepoprawnych danych?
     for test_coltype in ["product", "amount", "price", "invalid"]:
         for test_value in [None, "test", 123, 123.456]:
-            print(f"Checking {test_coltype} - {test_value} pair")
+            # print(f"Checking {test_coltype} - {test_value} pair")
             if test_coltype == "invalid":
                 try:
                     _format_column(test_coltype, test_value, 5)
@@ -258,5 +256,5 @@ if __name__ == "__main__":
     # TEST FORMATOWANIA PARAGONU
     receipt_width = 28
     test_products_listing(basket, max_width=receipt_width)
-    # print_receipt(basket, decimal_point=",", max_width=receipt_width)
-    # save_receipt_to_file(basket, max_width=receipt_width)
+    print_receipt(basket, decimal_point=",", max_width=receipt_width)
+    save_receipt_to_file(basket, max_width=receipt_width)

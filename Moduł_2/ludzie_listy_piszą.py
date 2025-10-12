@@ -47,10 +47,10 @@ if __name__ == "__main__":
     print(name_dictionary)
     # Zadanie 2
     for i in range(-1,2):
-        assert is_prime(i) == False, f"Only integers > 1 can be prime numbers"
-    assert is_prime(2) == True
-    assert is_prime(3) == True
-    assert is_prime(100_001) == False
+        assert not is_prime(i), f"Checking {i}. Only integers > 1 can be prime numbers."
+    assert is_prime(2)
+    assert is_prime(3)
+    assert is_prime(100_001)
 
     primes = [num for num in nums if is_prime(num)]  # filter prime numbers from nums
     print(primes)

@@ -59,3 +59,16 @@ def count_them_all(*args, **kwargs):
 
 count_them_all(1, 2, 3, "A")
 count_them_all(1, 2, 3 , "A", new=True)
+
+import sys
+
+def customized_hello(first_name, last_name, prefix):
+    print("Hello %s %s %s!" % (prefix, first_name, last_name))
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        exit(1)
+    first_name = sys.argv[1]
+    last_name = sys.argv[2]
+    prefix = sys.argv[3]
+    customized_hello(first_name, last_name, prefix)

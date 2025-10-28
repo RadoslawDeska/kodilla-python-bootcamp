@@ -1,71 +1,93 @@
+from functools import wraps
 import logging
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
-action = input("Podaj działanie, posługując się odpowiednią liczbą:\n1 Dodawanie\n2 Odejmowanie\n3 Mnożenie\n4 Dzielenie\n>>> ")
+operators = {}
 
-while True:
-    match action:
-        case "1" | "2" | "3" | "4":
-            break
-        case _:
-            logging.warning("Wybierz liczbę między 1 i 4.")
-            action = input(">>> ")
+def register(op):
+    def decorator(func):
+        @wraps(func)
+        def wrapper():
+            return
+        operators[op] = func
+        return wrapper
+    return decorator
 
-numbers = []
 
-def get_number(i):
-    if i <= 2:
-        inp = input(f"Podaj {i}. liczbę >>> ")
-    if i > 2:
-        inp = input(f"Podaj {i}. liczbę lub wciśnij [Enter], aby obliczyć >>> ")
-    try:
-        num = float(inp)
-    except ValueError:
-        return None
-    else:
-        return num
-    
-i = 1
-while True:
-    if action == "2" or action == "4":  # stop collecting numbers after 2 operands
-        if len(numbers) == 2:
-            break
-    
-    num = get_number(i)
-    if num:
-        numbers.append(num)
-        i += 1
-    else:
-        if action == "1" or action == "3":
-            if len(numbers) > 1:
-                break
-            else:
-                logging.warning("Wymagane są przynajmniej dwie liczby.")
+@register("+")
+def add(*args):
+    """Dodaje argumenty"""
+    result = 0
+    for arg in args:
+        result += arg
+    return result
+
+@register("-")
+def subtract(*args):
+    """Odejmuje argumenty"""
+    result = args[0]
+    for arg in args[1:]:
+        result -= arg
+    return result
+
+@register("*")
+def multiply(*args):
+    """Mnoży argumenty"""
+    result = 1
+    for arg in args:
+        result *= arg
+    return result
+
+@register("/")
+def divide(*args):
+    """Dzieli argumenty"""
+    result = args[0]
+    for arg in args[1:]:
+        result /= arg
+    return result
+
+
+def get_operation():
+    """Pobiera od użytkownika rodzaj działania"""
+    op = input(f"Podaj działanie {''.join(operators.keys())}: ")
+    return op
+
+def get_number():
+    """Pobiera od użytkownika liczbę"""
+    inp = float(input("Podaj liczbę: "))
+    return inp
+
+def ask_more():
+    """Pobiera od użytkownika kolejną liczbę (przy więcej niż dwóch argumentach wybranej operacji)"""
+    num = input("Podaj liczbę lub [Enter] by podać wynik: ")
+    if num == "":
+        return False
+    return num  # Uwzględnia zero!
+
+def get_more(numbers: list):
+    while True:
+        number = ask_more()
+        if number:
+            numbers.append(float(number))
         else:
-            logging.warning("Wymagane są dwie liczby.")
+            break
+    return numbers
 
-
-list_of_numbers = ", ".join([str(i) for i in numbers[:-1]])
-list_of_numbers += f" i {numbers[-1]}"
-
-result = numbers[0]
-        
-match action:
-    case "1":
-        logging.info(f"Dodaję {list_of_numbers}")
-        for i in numbers[1:]:
-            result += i
-    case "2":
-        logging.info(f"Odejmuję {list_of_numbers}")
-        for i in numbers[1:]:
-            result -= i
-    case "3":
-        logging.info(f"Mnożę {list_of_numbers}")
-        for i in numbers[1:]:
-            result *= i
-    case "4":
-        logging.info(f"Dzielę {list_of_numbers}")
-        for i in numbers[1:]:
-            result /= i
+def main():
+    op = get_operation()
+    numbers = []
     
-logging.info(f"Wynik to {result}")
+    for _ in range(2):
+        number = get_number()
+        numbers.append(number)
+    
+    if op in ["+", "*"]:  # opcja do operacji na więcej niż 2 argumentach
+        numbers = get_more(numbers)
+    
+    result = operators[op](*numbers)
+    
+    print(f"{op.join([str(num) for num in numbers])} = {result}")
+
+
+if __name__ == "__main__":
+    main()

@@ -9,7 +9,12 @@ class BaseContact:
         self.email = email.lower()
 
     def __str__(self):
+        """Display base contact information."""
         return f"{self.fullname}, {self.phone}, {self.email}"
+    
+    def __repr__(self):
+        """Display detailed contact information."""
+        return f"{self.fullname}, {self.phone}, {self.email}{self.additional_info}"
     
     @property
     def fullname(self):
@@ -19,8 +24,16 @@ class BaseContact:
     def label_length(self):
         return len(self.fullname)
     
+    @property
+    def contactphone(self):
+        return self.phone
+    
+    @property
+    def additional_info(self):
+        return ""
+    
     def contact(self):
-        print(f"Wybieram numer {self.phone} i dzwonię do {self.fullname}")
+        print(f"Wybieram numer {self.contactphone} i dzwonię do {self.fullname}")
 
 
 class BusinessContact(BaseContact):
@@ -28,15 +41,23 @@ class BusinessContact(BaseContact):
         super().__init__(*args, **kwargs)
         self.firm = firm
         self.position = position
-        self.phone = workphone
+        self.workphone = workphone
     
     def __str__(self):
-        return f"{super().fullname}, {self.phone}, {self.firm}, {self.position}"
+        """Display business contact information."""
+        return f"{super().fullname}, {self.workphone}, {self.firm}, {self.position}"
 
+    @property
+    def contactphone(self):
+        return self.workphone
+    
+    @property
+    def additional_info(self):
+        return f", Work phone: {self.workphone}, Company: {self.firm}, Position: {self.position}"
 
 class ContactList(list):
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.args = args
     
     def __repr__(self):
@@ -59,25 +80,14 @@ def _create_contacts(contact_class, quantity):
             workphone = fake.phone_number()
             yield BusinessContact(firm, position, workphone, fname, lname, phone, email)
 
-def create_contacts(contact_class, quantity):
+def create_contacts(contact_class, quantity) -> ContactList[BaseContact | BusinessContact]:
     return ContactList(_create_contacts(contact_class, quantity))
 
-contacts = create_contacts(BusinessContact, 5)
-print(contacts)
-
-# RANDOM DATA
-p1 = "Augustyn,Czerwinski,+48891524857,AugustynCzerwinski@einrot.com,Mages,Horticultural specialty farmer,+48935059320"
-p2 = "Wawrzyniec,Symanski,+48534271296,WawrzyniecSymanski@jourrapide.com,Soul Sounds Unlimited,Wire installer,+48800262133"
-p3 = "Kazimiera,Chmielewska,+48849183440,KazimieraChmielewska@fleckens.hu,Just For Feet,Tour escort,+48226534360"
-p4 = "Anka,Sobczak,+48928746173,AnkaSobczak@cuvox.de,Sports Unlimited,Conservator,+48291927517"
-p5 = "Iwona,Dudek,+48979124700,IwonaDudek@jourrapide.com,Argus Tapes & Records,Holistic nurse,+48941956594"
-
-people = [data.split(",") for data in [p1, p2, p3, p4, p5]]
-base_cards = [BaseContact(*person[:4]) for person in people]
-business_cards = [BusinessContact(*person[4:], *person[:4]) for person in people]
+pcards = create_contacts(BaseContact, 5)
+bcards = create_contacts(BusinessContact, 5)
 
 if __name__ == "__main__":
-    base_cards[0].contact()
-    print(base_cards[0])
-    business_cards[0].contact()
-    print(business_cards[0])
+    print(pcards[0].__repr__())
+    pcards[0].contact()
+    print(bcards[0].__repr__())
+    bcards[0].contact()

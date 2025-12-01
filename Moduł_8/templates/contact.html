@@ -1,0 +1,21 @@
+{% extends "parent.html" %}
+{% block headtitle %}
+Wizytówka - Kontakt
+{% endblock %}
+
+{% block content %}
+<section id="kontakt">
+    <h2>Kontakt</h2>
+    <ul class="contact-list">
+        <li><strong>Email:</strong>&nbsp;<a href="mailto:radoslaw@example.com">radoslaw@example.com</a></li>
+        <li><strong>Telefon:</strong>&nbsp;<a href="tel:+48123456789">+48 123 456 789</a></li>
+        <li><strong>GitHub:</strong>&nbsp;<a href="https://github.com/RadoslawDeska"
+                target="_blank">github.com/RadoslawDeska</a></li>
+    </ul>
+    <h3>Wyślij wiadomość</h3>
+    <form action="" method="POST">
+        <textarea name="message" id="message" placeholder="Wpisz wiadomość..."></textarea>
+        <input type="submit" class="send" value="Prześlij">
+    </form>
+</section>
+{% endblock %}

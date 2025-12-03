@@ -1,0 +1,100 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #f0f4f8, #d9e4ec);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+
+    width: 320px;
+    min-height: 300px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    text-align: center;
+}
+
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+label {
+    font-weight: 600;
+    color: #555;
+    text-align: left;
+}
+
+select,
+input[type="number"] {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    padding-bottom: 1rem; /* 👈 add spacing below each field */
+}
+
+select:focus,
+input[type="number"]:focus {
+    border-color: #0078d7;
+    outline: none;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+}
+
+/* dodatkowo wyłącz wszystkie spin-elementy w FF */
+input[type=number]::-moz-number-spin-box,
+input[type=number]::-moz-number-spin-up,
+input[type=number]::-moz-number-spin-down {
+    display: none !important;
+}
+
+/* Chrome, Safari, Edge (WebKit/Blink) */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0;
+}
+
+button {
+    padding: 0.8rem;
+    background: #0078d7;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 0.5rem; /* 👈 extra breathing room above the button */
+}
+
+button:hover {
+    background: #005fa3;
+}
+
+#results {
+    display: block;
+    margin-top: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #0078d7;
+}

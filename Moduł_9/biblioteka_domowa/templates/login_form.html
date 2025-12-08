@@ -1,0 +1,10 @@
+{% block splash_login %}
+<form method="POST" action="/login/">
+    {{ form.csrf_token }}
+    {{ form.email.label }}
+    {{ form.email }}
+    {{ form.password.label }}
+    {{ form.password }}
+    <input type="submit" value="Go">
+</form>
+{% endblock %}

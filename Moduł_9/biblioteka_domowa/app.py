@@ -2,11 +2,22 @@ import hashlib
 import os
 import tempfile
 import uuid
+from collections import namedtuple
 
-from flask import Flask, abort, redirect, render_template, request, url_for
-from werkzeug.utils import secure_filename  # removes unsafe symbols from filenamee
+from flask import (
+    Flask,
+    abort,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from werkzeug.datastructures.file_storage import FileStorage
+from werkzeug.utils import secure_filename  # removes unsafe symbols from filenamee
 
+from auth import login_required
+from forms import EmailPasswordForm
 
 # Use absolute path to ensure the right folder path
 BASE_FOLDER = os.path.abspath(os.path.dirname(__file__))
@@ -19,9 +30,14 @@ CHUNK_SIZE_BYTES = 1 * 1024  # 1 KB
 
 # CONFIGURATION
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getrandom(16).hex()
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_SIZE
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+User = namedtuple("User", field_names=["email", "password"])
+user = User(email="john@black.com", password="black")
 
 # Allowed picture attributes
 ALLOWED_EXT = {
@@ -58,11 +74,11 @@ def get_sigs(ext: str) -> tuple[list[bytes], bytes]:
     ext_sigs = ALLOWED_EXT.get(ext, {})
 
     sois = [val for key, val in ext_sigs.items() if key.startswith("soi")]
-    eoi = ext_sigs.get("eoi")
+    eoi = ext_sigs.get("eoi", b'')
 
     return sois, eoi
 
-def is_ext_allowed(filename: str) -> bool:
+def is_ext_allowed(filename: str) -> tuple[bool, str|None]:
     if '.' in filename:
         ext = filename.rsplit('.', 1)[1].lower()
         ext = normalize_ext(ext)
@@ -76,17 +92,19 @@ def _cleanup_413(tmp: tempfile._TemporaryFileWrapper, msg):
         os.remove(tmp.name)
     return abort(413, msg)
 
-def handle_upload(file_storage):
-    file_storage: FileStorage = file_storage
+def handle_upload(fs: FileStorage):
     total = 0
     sha = hashlib.sha256()
     first_bytes = b''
     last_bytes = b''
     tmp_name = None
 
+    if not fs.filename:  # this condition is checked before calling this function (here only for typechecking)
+        abort(400, "No file selected")
+    
     # First verify the extension
     app.logger.debug("Verifying the extension")
-    ok, ext = is_ext_allowed(file_storage.filename)
+    ok, ext = is_ext_allowed(fs.filename)
     if not ok or not ext:
         abort(415, "Extension not allowed")
     else:
@@ -105,7 +123,7 @@ def handle_upload(file_storage):
             # stream read by chunk
             app.logger.debug("Reading chunk by chunk...")
             while True:
-                chunk = file_storage.stream.read(CHUNK_SIZE_BYTES)
+                chunk = fs.stream.read(CHUNK_SIZE_BYTES)
                 if not chunk:
                     app.logger.debug("Stream ended")
                     break
@@ -148,7 +166,7 @@ def handle_upload(file_storage):
                 abort(422, "Cannot process the file")
         
         # Generate unique name and replace the temporary filename with the final one
-        ext = os.path.splitext(secure_filename(file_storage.filename))[1]
+        ext = os.path.splitext(secure_filename(fs.filename))[1]
         final = f"{uuid.uuid4().hex}{ext}"
         final_path = os.path.join(app.config['UPLOAD_FOLDER'], final)
         os.replace(tmp_name, final_path)
@@ -165,7 +183,42 @@ def handle_upload(file_storage):
                 pass
         raise
 
+@app.route("/login", methods=["POST"])
+def login():
+    form = EmailPasswordForm()
+    error = ""
+    if form.validate_on_submit():
+        if form.email.data == user.email and form.password.data == user.password:
+            session["user"] = form.email.data
+            session["logged_in"] = True
+            session["errors"] = error
+            return redirect(url_for("home"))  # albo JSON/HTML cokolwiek.
+        else:
+            session["user"] = None
+            session["logged_in"] = False
+            session["errors"] = "Wrong credentials!!"
+            return redirect(url_for("home"))
+    else:
+        session["errors"] = form.errors
+        return redirect(url_for("home"))
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.pop("user")
+    session.pop("logged_in")
+    return redirect(url_for("home"))
+
+
+@app.route("/")
+def home():
+    form        = EmailPasswordForm()
+    user        = session.get("user", None)
+    logged_in   = session.get("logged_in", False)
+    
+    return render_template('base.html', form=form, logged_in=logged_in, user=user)
+
 @app.route("/images/", methods=["GET", "POST"])
+@login_required
 def form_view():
     if request.method == "POST":
         # verify form

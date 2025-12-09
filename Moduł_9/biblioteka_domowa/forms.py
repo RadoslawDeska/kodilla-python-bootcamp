@@ -7,7 +7,8 @@ class LoginForm(FlaskForm):
     password = PasswordField('password', validators=[DataRequired()])
 
 class EmailPasswordForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
+    email = StringField('Email', validators=[DataRequired(message="Please enter your email address."),
+                                             Email(message="That doesn’t look like a valid email.")])
     password = PasswordField('Password', validators=[DataRequired()])
     
 class TelephoneForm(FlaskForm):

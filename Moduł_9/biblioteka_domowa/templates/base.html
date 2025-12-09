@@ -37,6 +37,9 @@
                     <button class="btn btn-outline-light btn-lg" type="submit">Logout</button>
                 </form>
                 {% else %}
+                <!-- {% if errors %}
+                <span class="navbar-text text-white me-lg-3 mb-2 mb-lg-0">{{ errors[0] }}</span>
+                {% endif %} -->
                 <form class="d-flex flex-column flex-lg-row gap-2" action="{{ url_for('login') }}" method="post">
                     {{ form.hidden_tag() }}
                     {{ form.email(class="form-control form-control-lg") }}

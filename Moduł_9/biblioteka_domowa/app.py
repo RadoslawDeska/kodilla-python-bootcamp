@@ -30,7 +30,8 @@ CHUNK_SIZE_BYTES = 1 * 1024  # 1 KB
 
 # CONFIGURATION
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getrandom(16).hex()
+app.config['SECRET_KEY'] = os.environ.get("FLASK_SECRET_KEY")  # wymaga ustawienia zmiennej środ. w systemie - BEZPIECZNIEJ
+.env - plik z sekretami i innymi (import dotenv) - nie dodawwać do commita od razu do gitignore
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_SIZE
@@ -196,7 +197,7 @@ def login():
         else:
             session["user"] = None
             session["logged_in"] = False
-            session["errors"] = "Wrong credentials!!"
+            session["errors"] = {"password": "Wrong credentials!!"}
             return redirect(url_for("home"))
     else:
         session["errors"] = form.errors
@@ -214,8 +215,16 @@ def home():
     form        = EmailPasswordForm()
     user        = session.get("user", None)
     logged_in   = session.get("logged_in", False)
+    errors      = session.pop("errors", {})
+    # print(errors)
+    # _errors = []
+    # for ek_, ev in errors.items():
+    #     if isinstance(ev, list):
+    #         _errors.append(ev[0])
+    #     else:
+    #         _errors.append(ev)
     
-    return render_template('base.html', form=form, logged_in=logged_in, user=user)
+    return render_template('base.html', form=form, logged_in=logged_in, user=user, errors=errors)
 
 @app.route("/images/", methods=["GET", "POST"])
 @login_required

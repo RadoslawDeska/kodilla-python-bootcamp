@@ -1,0 +1,66 @@
+<!-- templates/create_user.html -->
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dodaj użytkownika</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- (Opcjonalnie) Bootstrap dla lepszego wyglądu -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h1 class="mb-3">Dodaj użytkownika</h1>
+
+    <!-- Wiadomości flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('create_user_view') }}" class="card p-3 shadow-sm">
+      <!-- Jeśli używasz Flask-WTF/CSRF -->
+      {# {{ form.csrf_token }} #}
+
+      <div class="mb-3">
+        <label for="email" class="form-label">E-mail</label>
+        <input
+          type="email"
+          name="email"
+          id="email"
+          class="form-control"
+          placeholder="jan.kowalski@example.com"
+          required
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label">Hasło</label>
+        <input
+          type="password"
+          name="password"
+          id="password"
+          class="form-control"
+          placeholder="••••••••"
+          minlength="6"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary">Utwórz użytkownika</button>
+      <a href="{{ url_for('home') }}" class="btn btn-secondary ms-2">Powrót</a>
+    </form>
+  </div>
+
+  <!-- (Opcjonalnie) Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

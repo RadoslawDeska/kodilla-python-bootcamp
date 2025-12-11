@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block home_content %}
+    {% if logged_in %}
+        <p>Prywatne dla zalogowanych</p>
+    {% else %}
+        <p>Publiczne informacje</p>
+    {% endif %}
+{% endblock %}

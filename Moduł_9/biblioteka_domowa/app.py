@@ -2,11 +2,12 @@ import hashlib
 import os
 import tempfile
 import uuid
-from collections import namedtuple
 
+from dotenv import dotenv_values, find_dotenv
 from flask import (
     Flask,
     abort,
+    flash,
     redirect,
     render_template,
     request,
@@ -17,6 +18,8 @@ from werkzeug.datastructures.file_storage import FileStorage
 from werkzeug.utils import secure_filename  # removes unsafe symbols from filenamee
 
 from auth import login_required
+from extensions.db import db
+from extensions.functions import create_user, get_user_by_email
 from forms import EmailPasswordForm
 
 # Use absolute path to ensure the right folder path
@@ -29,16 +32,24 @@ MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 CHUNK_SIZE_BYTES = 1 * 1024  # 1 KB
 
 # CONFIGURATION
+env_file = find_dotenv('.env')
+config_env = dotenv_values(env_file)
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get("FLASK_SECRET_KEY")  # wymaga ustawienia zmiennej środ. w systemie - BEZPIECZNIEJ
-.env - plik z sekretami i innymi (import dotenv) - nie dodawwać do commita od razu do gitignore
+
+
+db_rel_path = str(config_env["FLASK_BIBLIOTEKA_DOMOWA_DB"])
+db_path = os.path.join(BASE_FOLDER, db_rel_path)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_SIZE
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-User = namedtuple("User", field_names=["email", "password"])
-user = User(email="john@black.com", password="black")
+# Configure SQLAlchemy
+app.config['SECRET_KEY'] = config_env["FLASK_BIBLIOTEKA_DOMOWA_SECRET_KEY"]
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db.init_app(app)
 
 # Allowed picture attributes
 ALLOWED_EXT = {
@@ -184,23 +195,23 @@ def handle_upload(fs: FileStorage):
                 pass
         raise
 
-@app.route("/login", methods=["POST"])
+
+@app.route('/login', methods=["POST"])
 def login():
     form = EmailPasswordForm()
-    error = ""
     if form.validate_on_submit():
-        if form.email.data == user.email and form.password.data == user.password:
-            session["user"] = form.email.data
+        user = get_user_by_email(form.email.data)
+        if user and form.password.data and user.check_password(form.password.data):
+            session["user"] = user.email
             session["logged_in"] = True
-            session["errors"] = error
-            return redirect(url_for("home"))  # albo JSON/HTML cokolwiek.
+            return redirect(url_for("home"))
         else:
-            session["user"] = None
-            session["logged_in"] = False
-            session["errors"] = {"password": "Wrong credentials!!"}
+            flash("Wrong credentials!!", "error")
             return redirect(url_for("home"))
     else:
-        session["errors"] = form.errors
+        for field, errors in form.errors.items():
+            for err in errors:
+                flash(f"{err}", "error")
         return redirect(url_for("home"))
 
 @app.route("/logout", methods=["POST"])
@@ -215,16 +226,8 @@ def home():
     form        = EmailPasswordForm()
     user        = session.get("user", None)
     logged_in   = session.get("logged_in", False)
-    errors      = session.pop("errors", {})
-    # print(errors)
-    # _errors = []
-    # for ek_, ev in errors.items():
-    #     if isinstance(ev, list):
-    #         _errors.append(ev[0])
-    #     else:
-    #         _errors.append(ev)
-    
-    return render_template('base.html', form=form, logged_in=logged_in, user=user, errors=errors)
+
+    return render_template('home.html', form=form, logged_in=logged_in, user=user)
 
 @app.route("/images/", methods=["GET", "POST"])
 @login_required
@@ -243,6 +246,34 @@ def form_view():
     
     return render_template('form_with_image.html')
 
+
+# DEVELOPMENT FUNCTION
+@app.route("/create-user", methods=["GET", "POST"])
+def create_user_view():
+    '''This is only for administrative purpose during DEVELOPMENT'''
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        if not email or not password:
+            flash("E-mail i hasło są wymagane.", "error")
+            return render_template("create_user.html")
+
+        # Sprawdź, czy użytkownik istnieje
+        if get_user_by_email(email):
+            flash("Taki e-mail już istnieje.", "error")
+            return render_template("create_user.html")
+
+        # Utwórz użytkownika
+        create_user(email, password)
+        flash("Użytkownik został utworzony.", "success")
+        # return redirect(url_for("home"))
+        return render_template("create_user.html")
+
+    return render_template("create_user.html")
+
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()   # create tables from models.py
+        create_user('john@black.com', 'black')  # test data
     app.run(debug=True)
-    

@@ -8,8 +8,6 @@ from flask import (
     Flask,
     abort,
     flash,
-    jsonify,
-    make_response,
     redirect,
     render_template,
     request,
@@ -24,6 +22,7 @@ from api.v1.users.model import User
 from api.v1.users.views import users_bp
 from auth import login_required
 from extensions.db import db
+from extensions.error_handling import register_handlers
 from forms import EmailPasswordForm
 
 # Use absolute path to ensure the right folder path
@@ -203,6 +202,15 @@ def handle_upload(fs: FileStorage):
         raise
 
 
+@app.route("/")
+def home():
+    form        = EmailPasswordForm()
+    user        = session.get("user", None)
+    logged_in   = session.get("logged_in", False)
+
+    return render_template('home.html', form=form, logged_in=logged_in, user=user)
+
+
 @app.route('/login', methods=["POST"])
 def login():
     form = EmailPasswordForm()
@@ -210,6 +218,7 @@ def login():
         user = User.get_by_email(form.email.data)
         if user and form.password.data and user.check_password(form.password.data):
             session["user"] = user.email
+            session["user_id"] = user.id
             session["logged_in"] = True
             return redirect(url_for("home"))
         else:
@@ -221,20 +230,38 @@ def login():
                 flash(f"{err}", "error")
         return redirect(url_for("home"))
 
+
 @app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return redirect(url_for("home"))
 
 
-@app.route("/")
-def home():
-    form        = EmailPasswordForm()
-    user        = session.get("user", None)
-    logged_in   = session.get("logged_in", False)
+@app.route("/register", methods=["GET", "POST"])
+def create_user_view():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
 
-    return render_template('home.html', form=form, logged_in=logged_in, user=user)
+        if not email or not password:
+            flash("E-mail i hasło są wymagane.", "error")
+            return render_template("register.html")
 
+        # Sprawdź, czy użytkownik istnieje
+        if User.get_by_email(email):
+            flash("Taki e-mail już istnieje.", "error")
+            return render_template("register.html")
+
+        # Utwórz użytkownika
+        User.create_user(email, password)
+        flash("Użytkownik został utworzony.", "success")
+        return redirect(url_for("home"))
+
+    return render_template("register.html")
+
+
+
+### LOGIN-RESTRICTED AREA ###
 @app.route("/images/", methods=["GET", "POST"])
 @login_required
 def form_view():
@@ -253,49 +280,14 @@ def form_view():
     return render_template('form_with_image.html')
 
 
+### API ###
 
-# DEVELOPMENT FUNCTION
-@app.route("/create-user", methods=["GET", "POST"])
-def create_user_view():
-    '''This is only for administrative purpose during DEVELOPMENT'''
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        if not email or not password:
-            flash("E-mail i hasło są wymagane.", "error")
-            return render_template("create_user.html")
-
-        # Sprawdź, czy użytkownik istnieje
-        if User.get_by_email(email):
-            flash("Taki e-mail już istnieje.", "error")
-            return render_template("create_user.html")
-
-        # Utwórz użytkownika
-        User.create_user(email, password)
-        flash("Użytkownik został utworzony.", "success")
-        # return redirect(url_for("home"))
-        return render_template("create_user.html")
-
-    return render_template("create_user.html")
-
-#### API ####
-# Register blueprint for users (for modularity)
+#### API - store as blueprints for modularity ####
 app.register_blueprint(users_bp)
-# Register blueprint for books (for modularity)
 app.register_blueprint(books_bp)
+#### API ERROR-HANDLING ####
+register_handlers(app)
 
-@app.errorhandler(400)
-def bad_request(error):
-    return make_response(jsonify({'error': 'Bad request', 'status_code': 400}), 400)
-
-@app.errorhandler(403)
-def forbidden(error):
-    return make_response(jsonify({'error': 'Forbidden', 'status_code': 403}), 403)
-
-@app.errorhandler(404)
-def not_found(error):
-    return make_response(jsonify({'error': 'Not found', 'status_code': 404}), 404)
 
 if __name__ == '__main__':
     with app.app_context():

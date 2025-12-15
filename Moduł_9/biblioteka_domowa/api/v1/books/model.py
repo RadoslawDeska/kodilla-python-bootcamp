@@ -1,5 +1,6 @@
 from typing import List, Optional
 from extensions.db import db
+from flask import session
 
 class Book(db.Model):
     __tablename__ = "books"
@@ -9,13 +10,19 @@ class Book(db.Model):
     year = db.Column(db.Integer(), unique=False, nullable=False)
     pages = db.Column(db.Integer(), unique=False, nullable=False)
     publisher = db.Column(db.String(255), unique=False, nullable=True)
+    
+    # Get user id from `users` table
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    # set relation to the `users` table
+    user = db.relationship("User", back_populates="books")
 
-    def __init__(self, author: str, title: str, year: int, pages: int, publisher: str | None = None):
+    def __init__(self, author: str, title: str, year: int, pages: int, publisher: str | None = None, user_id: int = 0):
         self.author = author
         self.title = title
         self.year = year
         self.pages = pages
         self.publisher = publisher
+        self.user_id = user_id
     
     def __repr__(self):
         return f"<Book {self.author}, {self.title}, {self.year}, {self.publisher}>"
@@ -23,22 +30,24 @@ class Book(db.Model):
     @staticmethod
     def list_attrs():
         return ['id', 'author', 'title', 'year', 'pages', 'publisher']  # getmembers doesn't work outside app context
+        
+    @staticmethod
+    def all_for_user(user_id: int) -> List["Book"]:
+        return Book.query.filter_by(user_id=user_id).all()
     
     @staticmethod
-    def all() -> List["Book"]:
-        return Book.query.all()
+    def get_for_user(user_id: int, key: int) -> Optional["Book"]:
+        return Book.query.filter_by(user_id=user_id, id=key).first()
     
     @staticmethod
-    def get(key: int) -> Optional["Book"]:
-        return Book.query.get(key)
-    
-    @staticmethod
-    def delete(key:int):
-        out = Book.query.filter_by(id=key).delete()
+    def delete_for_user(user_id: int, key: int):
+        out = Book.query.filter_by(id=key, user_id=user_id).delete()
         db.session.commit()
         return out  # 0 = no success
     
     def create(self):
+        if not self.user_id and "user_id" in session:
+            self.user_id = session["user_id"]
         db.session.add(self)
         db.session.commit()
     

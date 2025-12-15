@@ -12,7 +12,7 @@ def require_admin():
     if request.endpoint in ("users.bootstrap_admin", "users.api_login", "users.api_logout"):
         return  # Allow to log in or log out
 
-    is_admin = session.get("logged_in") and session.get("role") == "admin"
+    is_admin = session.get("logged_in")# and session.get("role") == "admin"
     if not is_admin:
         abort(403)
 
@@ -59,10 +59,11 @@ def api_login():
 
     user = User.get_by_email(email)
     if user and user.check_password(password):
-        if user.role.value != "admin":
-            return jsonify({"error": "Only admin can log in here"}), 403
+        # if user.role.value != "admin":
+        #     return jsonify({"error": "Only admin can log in here"}), 403
 
         session["user"] = user.email
+        session["user_id"] = user.id
         session["logged_in"] = True
         session["role"] = user.role.value
         return jsonify({"message": "Logged in as admin"}), 200

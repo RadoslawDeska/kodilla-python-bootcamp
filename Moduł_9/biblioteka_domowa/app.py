@@ -8,6 +8,8 @@ from flask import (
     Flask,
     abort,
     flash,
+    jsonify,
+    make_response,
     redirect,
     render_template,
     request,
@@ -17,9 +19,11 @@ from flask import (
 from werkzeug.datastructures.file_storage import FileStorage
 from werkzeug.utils import secure_filename  # removes unsafe symbols from filenamee
 
+from api.v1.books.views import books_bp
+from api.v1.users.model import User
+from api.v1.users.views import users_bp
 from auth import login_required
 from extensions.db import db
-from extensions.functions import create_user, get_user_by_email
 from forms import EmailPasswordForm
 
 # Use absolute path to ensure the right folder path
@@ -50,6 +54,9 @@ app.config['SECRET_KEY'] = config_env["FLASK_BIBLIOTEKA_DOMOWA_SECRET_KEY"]
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
+
+# Configure API access
+app.config['ADMIN_SECRET_KEY'] = config_env["FLASK_BIBLIOTEKA_DOMOWA_API_ADMIN_SECRET_KEY"]
 
 # Allowed picture attributes
 ALLOWED_EXT = {
@@ -200,7 +207,7 @@ def handle_upload(fs: FileStorage):
 def login():
     form = EmailPasswordForm()
     if form.validate_on_submit():
-        user = get_user_by_email(form.email.data)
+        user = User.get_by_email(form.email.data)
         if user and form.password.data and user.check_password(form.password.data):
             session["user"] = user.email
             session["logged_in"] = True
@@ -216,8 +223,7 @@ def login():
 
 @app.route("/logout", methods=["POST"])
 def logout():
-    session.pop("user")
-    session.pop("logged_in")
+    session.clear()
     return redirect(url_for("home"))
 
 
@@ -247,6 +253,7 @@ def form_view():
     return render_template('form_with_image.html')
 
 
+
 # DEVELOPMENT FUNCTION
 @app.route("/create-user", methods=["GET", "POST"])
 def create_user_view():
@@ -260,20 +267,38 @@ def create_user_view():
             return render_template("create_user.html")
 
         # Sprawdź, czy użytkownik istnieje
-        if get_user_by_email(email):
+        if User.get_by_email(email):
             flash("Taki e-mail już istnieje.", "error")
             return render_template("create_user.html")
 
         # Utwórz użytkownika
-        create_user(email, password)
+        User.create_user(email, password)
         flash("Użytkownik został utworzony.", "success")
         # return redirect(url_for("home"))
         return render_template("create_user.html")
 
     return render_template("create_user.html")
 
+#### API ####
+# Register blueprint for users (for modularity)
+app.register_blueprint(users_bp)
+# Register blueprint for books (for modularity)
+app.register_blueprint(books_bp)
+
+@app.errorhandler(400)
+def bad_request(error):
+    return make_response(jsonify({'error': 'Bad request', 'status_code': 400}), 400)
+
+@app.errorhandler(403)
+def forbidden(error):
+    return make_response(jsonify({'error': 'Forbidden', 'status_code': 403}), 403)
+
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'Not found', 'status_code': 404}), 404)
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()   # create tables from models.py
-        create_user('john@black.com', 'black')  # test data
+        User.create_user('john@black.com', 'black')  # test data
     app.run(debug=True)

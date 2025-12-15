@@ -6,6 +6,6 @@ def login_required(f):
     def wrapper(*args, **kwargs):
         # sprawdzenie sesji
         if not session.get("logged_in"):
-            abort(403)
+            abort(401)
         return f(*args, **kwargs)
     return wrapper

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block home_content %}
-    {% if logged_in %}
+    {% if session.web_user_id %}
         <p>Prywatne dla zalogowanych</p>
     {% else %}
         <p>Publiczne informacje</p>

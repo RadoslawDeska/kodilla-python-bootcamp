@@ -1,6 +1,5 @@
 from typing import List, Optional
 from extensions.db import db
-from flask import session
 
 class Book(db.Model):
     __tablename__ = "books"
@@ -46,8 +45,8 @@ class Book(db.Model):
         return out  # 0 = no success
     
     def create(self):
-        if not self.user_id and "user_id" in session:
-            self.user_id = session["user_id"]
+        if not self.user_id:
+            raise ValueError("user_id is required for creating a book")
         db.session.add(self)
         db.session.commit()
     

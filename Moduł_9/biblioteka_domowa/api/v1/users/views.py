@@ -1,20 +1,11 @@
-from flask import Blueprint, jsonify, abort, request, session, current_app
+from flask import Blueprint, abort, current_app, jsonify, request
 
-from .model import User
+from auth import api_admin_required, get_serializer
 
-from .model import RoleEnum
+from .model import RoleEnum, User
 
 users_bp = Blueprint("users", __name__, url_prefix="/api/v1/users")
 
-@users_bp.before_request
-def require_admin():
-    # wyjątki dla login i logout
-    if request.endpoint in ("users.bootstrap_admin", "users.api_login", "users.api_logout"):
-        return  # Allow to log in or log out
-
-    is_admin = session.get("logged_in")# and session.get("role") == "admin"
-    if not is_admin:
-        abort(403)
 
 # Allow registering single admin for empty database
 @users_bp.route("/bootstrap-admin", methods=["POST"])
@@ -23,7 +14,7 @@ def bootstrap_admin():
     secret = request.headers.get("X-Bootstrap-Secret")
     if secret != current_app.config.get("ADMIN_SECRET_KEY"):
         abort(403)
-    
+
     # Check if database has `admin` user
     if User.query.filter_by(role="admin").first():
         return jsonify({"error": "Admin already exists"}), 403
@@ -35,49 +26,42 @@ def bootstrap_admin():
     # Set admin
     try:
         new_admin = User(
-            email=data["email"],
-            password=data["password"],
-            role=RoleEnum.admin
+            email=data["email"], password=data["password"], role=RoleEnum.admin
         )
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
     new_admin.create()
-    return jsonify({
-        "message": f"Bootstrap admin {new_admin.email} created",
-        "role": new_admin.role.value
-    }), 201
+    return jsonify(
+        {
+            "message": f"Bootstrap admin {new_admin.email} created",
+            "role": new_admin.role.value,
+        }
+    ), 201
+
 
 @users_bp.route("/login", methods=["POST"])
-def api_login():
+def api_login():  # everyone can log in after registration through WEB interface
     data = request.get_json()
     if not data:
         abort(400)
 
-    email = data.get("email")
-    password = data.get("password")
+    user = User.get_by_email(data.get("email"))
+    if not user or not user.check_password(data.get("password")):
+        abort(403)
 
-    user = User.get_by_email(email)
-    if user and user.check_password(password):
-        # if user.role.value != "admin":
-        #     return jsonify({"error": "Only admin can log in here"}), 403
+    # ADMIN-ONLY ACCESS
+    # if user.role.value != "admin":
+    #     abort(403)
 
-        session["user"] = user.email
-        session["user_id"] = user.id
-        session["logged_in"] = True
-        session["role"] = user.role.value
-        return jsonify({"message": "Logged in as admin"}), 200
-    else:
-        return jsonify({"error": "Invalid credentials"}), 403
+    s = get_serializer(current_app)  # Keep the user as hashed token for safety
+    token = s.dumps({"user_id": user.id, "role": user.role.value})
 
-@users_bp.route("/logout", methods=["POST"])
-def api_logout():
-    session.clear()
-    return jsonify({"message": "Logged out"}), 200
+    return jsonify({"access_token": token, "token_type": "Bearer"})
 
 
-# API ADMINISTRATIVE FUNCTIONS (after admin login)
 @users_bp.route("/register", methods=["POST"])
+@api_admin_required  # Only admin can register new users through API
 def register_user():
     data = request.get_json()
     if not data or not all(k in data for k in ("email", "password")):
@@ -91,13 +75,12 @@ def register_user():
         new_user = User(
             email=data["email"],
             password=data["password"],
-            role=data.get("role", "user")  # może być string
+            role=data.get("role", "user"),
         )
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
     new_user.create()
-    return jsonify({
-        "message": f"User {new_user.email} registered",
-        "role": new_user.role.value
-    }), 201
+    return jsonify(
+        {"message": f"User {new_user.email} registered", "role": new_user.role.value}
+    ), 201

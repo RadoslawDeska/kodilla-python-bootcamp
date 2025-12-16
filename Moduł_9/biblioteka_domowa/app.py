@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename  # removes unsafe symbols from filena
 from api.v1.books.views import books_bp
 from api.v1.users.model import User
 from api.v1.users.views import users_bp
-from auth import login_required
+from auth import web_login_required
 from extensions.db import db
 from extensions.error_handling import register_handlers
 from forms import EmailPasswordForm
@@ -80,7 +80,7 @@ EXT_ALIASES = {
 }
 
 def normalize_ext(ext: str) -> str:
-    """Zwraca znormalizowane rozszerzenie pliku."""
+    """Return normalized extension"""
     ext = ext.lower()
     return EXT_ALIASES.get(ext, ext)
 
@@ -205,30 +205,20 @@ def handle_upload(fs: FileStorage):
 @app.route("/")
 def home():
     form        = EmailPasswordForm()
-    user        = session.get("user", None)
-    logged_in   = session.get("logged_in", False)
+    return render_template('home.html', form=form)
 
-    return render_template('home.html', form=form, logged_in=logged_in, user=user)
-
-
-@app.route('/login', methods=["POST"])
+@app.route("/login", methods=["POST"])
 def login():
     form = EmailPasswordForm()
     if form.validate_on_submit():
         user = User.get_by_email(form.email.data)
-        if user and form.password.data and user.check_password(form.password.data):
-            session["user"] = user.email
-            session["user_id"] = user.id
-            session["logged_in"] = True
+        if user and user.check_password(form.password.data):
+            session.clear()
+            session["web_user_id"] = user.id
+            session["web_email"] = user.email
             return redirect(url_for("home"))
-        else:
-            flash("Wrong credentials!!", "error")
-            return redirect(url_for("home"))
-    else:
-        for field, errors in form.errors.items():
-            for err in errors:
-                flash(f"{err}", "error")
-        return redirect(url_for("home"))
+    flash("Wrong credentials", "error")
+    return redirect(url_for("home"))
 
 
 @app.route("/logout", methods=["POST"])
@@ -244,17 +234,17 @@ def create_user_view():
         password = request.form.get("password")
 
         if not email or not password:
-            flash("E-mail i hasło są wymagane.", "error")
+            flash("E-mail and password are required", "error")
             return render_template("register.html")
 
         # Sprawdź, czy użytkownik istnieje
         if User.get_by_email(email):
-            flash("Taki e-mail już istnieje.", "error")
+            flash("Cannot register", "error")
             return render_template("register.html")
 
         # Utwórz użytkownika
         User.create_user(email, password)
-        flash("Użytkownik został utworzony.", "success")
+        flash("User has been created", "success")
         return redirect(url_for("home"))
 
     return render_template("register.html")
@@ -263,7 +253,7 @@ def create_user_view():
 
 ### LOGIN-RESTRICTED AREA ###
 @app.route("/images/", methods=["GET", "POST"])
-@login_required
+@web_login_required
 def form_view():
     if request.method == "POST":
         # verify form
@@ -280,7 +270,7 @@ def form_view():
     return render_template('form_with_image.html')
 
 
-### API ###
+### API AREA ###
 
 #### API - store as blueprints for modularity ####
 app.register_blueprint(users_bp)

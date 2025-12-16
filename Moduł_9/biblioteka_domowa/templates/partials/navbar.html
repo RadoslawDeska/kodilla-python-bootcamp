@@ -20,7 +20,7 @@
 
             {% if session.web_user_id %}
             <span class="navbar-text text-white me-lg-3 mb-2 mb-lg-0">
-                You are logged in as {{ user }}
+                You are logged in as {{ session.web_email }}
             </span>
             <form class="d-flex flex-column flex-lg-row gap-2" action="/logout" method="post">
                 <button class="btn btn-outline-light btn-lg" type="submit">Logout</button>

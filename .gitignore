@@ -1,7 +1,12 @@
 # My list
+kodilla.code-workspace
 Moduł_1/notatki.txt
 Moduł_3/learning-git-task/
-Moduł_5/Warehouse-Manager/
+Moduł_5/
+Moduł_9/biblioteka_domowa/biblioteka.db
+Moduł_9/biblioteka_domowa/make_request.py
+Moduł_10/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -220,7 +225,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
-kodilla.code-workspace
-Moduł_9/biblioteka_domowa/biblioteka.db
-Moduł_9/biblioteka_domowa/make_request.py

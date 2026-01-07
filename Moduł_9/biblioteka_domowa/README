@@ -1,0 +1,55 @@
+# Biblioteka Domowa (Home Library)
+
+A Flask-based REST API and web application for managing a personal book library with user authentication and role-based access control.
+
+## Features
+
+- **User Authentication**: Web and API-based login with JWT tokens
+- **Role-Based Access Control**: Admin and user roles with different permissions
+- **Book Management**: Create, read, update, and delete books in your personal library
+- **API v1**: RESTful API endpoints for programmatic access
+- **File Upload**: Support for image uploads with validation (PNG, JPG, GIF)
+- **Database**: SQLite with SQLAlchemy ORM
+- **Bootstrap Admin**: Initialize first admin user with secret key
+
+
+## Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/biblioteka_domowa.git
+   cd biblioteka_domowa
+
+2. **Create a virtual environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+3. **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+4. **Set up the environment:** Follow the instructions in the Environment Configuration section.
+
+## Environment Configuration
+
+To configure the application, you need to set up the environment variables. Follow these steps to edit the `example.env` file:
+
+1. **Locate the `example.env` file**: This file is located in the root directory of your project.
+2. **Copy the `example.env` file**: Create a copy of the `example.env` file and rename it to `.env`. This file will be used to store your environment variables.
+3. **Edit the `.env` file**: Open the `.env` file in a text editor and set the variables contained within:
+
+    ```bash
+    FLASK_BIBLIOTEKA_DOMOWA_SECRET_KEY  # Your very secretive password to encrypt the Flask session
+
+    FLASK_BIBLIOTEKA_DOMOWA_DB  # Full path to where database should be located
+
+    FLASK_BIBLIOTEKA_DOMOWA_API_ADMIN_SECRET_KEY  # Set your very secretive password to the API.
+
+## Usage
+1. **Run the application:**
+    ```bash
+    python -m app
+    ```
+
+2. **Access the web application:** Open your browser and go to `http://127.0.0.1:5000`.
+
+3. **API Documentation:** Refer to the API documentation for details on available endpoints and usage.

@@ -17,7 +17,7 @@ A Flask-based REST API and web application for managing a personal book library 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/yourusername/biblioteka_domowa.git
+   git clone https://github.com/RadoslawDeska/biblioteka_domowa.git
    cd biblioteka_domowa
 
 2. **Create a virtual environment:**

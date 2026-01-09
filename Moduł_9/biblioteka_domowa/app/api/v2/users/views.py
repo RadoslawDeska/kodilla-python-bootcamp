@@ -1,10 +1,10 @@
 from flask import Blueprint, abort, current_app, jsonify, request
 
-from auth import api_admin_required, get_serializer
+from app.auth import api_admin_required, get_serializer
 
 from .model import RoleEnum, User
 
-users_bp = Blueprint("users", __name__, url_prefix="/api/v1/users")
+users_bp = Blueprint("users", __name__, url_prefix="/api/v2/users")
 
 
 # Allow registering single admin for empty database
@@ -82,5 +82,8 @@ def register_user():
 
     new_user.create()
     return jsonify(
-        {"message": f"User {new_user.email} registered", "role": new_user.role.value}
+        {
+            "message": f"User {new_user.email} registered",
+            "role": new_user.role.value,
+        }
     ), 201

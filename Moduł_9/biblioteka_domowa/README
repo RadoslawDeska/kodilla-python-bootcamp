@@ -7,7 +7,7 @@ A Flask-based REST API and web application for managing a personal book library 
 - **User Authentication**: Web and API-based login with JWT tokens
 - **Role-Based Access Control**: Admin and user roles with different permissions
 - **Book Management**: Create, read, update, and delete books in your personal library
-- **API v1**: RESTful API endpoints for programmatic access
+- **API v2**: RESTful API endpoints for programmatic access
 - **File Upload**: Support for image uploads with validation (PNG, JPG, GIF)
 - **Database**: SQLite with SQLAlchemy ORM
 - **Bootstrap Admin**: Initialize first admin user with secret key

@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, jsonify, request
+from flask import Blueprint, abort, jsonify, request, g
 from pydantic import ValidationError
 
 from api.v1.books.validation import (
@@ -6,7 +6,7 @@ from api.v1.books.validation import (
     BookResponseSchema,
     BookUpdateSchema,
 )
-from auth import api_login_required
+from app.auth import api_login_required
 
 from .model import Book
 
@@ -16,7 +16,7 @@ books_bp = Blueprint("books", __name__, url_prefix="/api/v1/books")
 def validate_book_access(bk: Book | None):
     if not bk:
         abort(404)
-    if bk.user_id != request.api_user_id:  # <-- używamy request.api_user_id
+    if bk.user_id != g.api_user_id:
         abort(403)
     return bk
 
@@ -24,7 +24,7 @@ def validate_book_access(bk: Book | None):
 @books_bp.route("/", methods=["GET"])
 @api_login_required
 def books_list_api_v1():
-    books = Book.all_for_user(request.api_user_id)
+    books = Book.all_for_user(g.api_user_id)
     return jsonify([b.to_dict() for b in books])
 
 
@@ -42,7 +42,7 @@ def create_book():
         year=data.year,
         pages=data.pages,
         publisher=data.publisher,
-        user_id=request.api_user_id,
+        user_id=g.api_user_id,
     )
     new_book.create()
     return jsonify(
@@ -54,7 +54,7 @@ def create_book():
 @books_bp.route("/<int:book_id>", methods=["GET"])
 @api_login_required
 def get_book(book_id):
-    book = Book.get_for_user(request.api_user_id, book_id)
+    book = Book.get_for_user(g.api_user_id, book_id)
     book = validate_book_access(book)
     return jsonify(book.to_dict())
 
@@ -62,7 +62,7 @@ def get_book(book_id):
 @books_bp.route("/<int:book_id>", methods=["PATCH", "PUT"])
 @api_login_required
 def edit_book(book_id):
-    book = Book.get_for_user(request.api_user_id, book_id)
+    book = Book.get_for_user(g.api_user_id, book_id)
     book = validate_book_access(book)
     try:
         data = BookUpdateSchema.model_validate(request.json)
@@ -74,16 +74,18 @@ def edit_book(book_id):
         setattr(book, field, value)
 
     book.edit()  # update database
-    return jsonify(BookResponseSchema.model_validate(book.to_dict()).model_dump()), 200
+    return jsonify(
+        BookResponseSchema.model_validate(book.to_dict()).model_dump()
+    ), 200
 
 
 @books_bp.route("/<int:book_id>", methods=["DELETE"])
 @api_login_required
 def remove_book(book_id):
-    book = Book.get_for_user(request.api_user_id, book_id)
+    book = Book.get_for_user(g.api_user_id, book_id)
     book = validate_book_access(book)
 
-    result = Book.delete_for_user(request.api_user_id, book_id)
+    result = Book.delete_for_user(g.api_user_id, book_id)
     if not result:
         abort(404)
     return jsonify({"deleted": True, "id": book_id})

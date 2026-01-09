@@ -9,6 +9,7 @@ from app.api.v2.books.validation import (
 from app.auth import api_login_required
 
 from .model import Book
+from app.api.v2.books.model import Author
 
 books_bp = Blueprint("books", __name__, url_prefix="/api/v2/books")
 
@@ -36,15 +37,24 @@ def create_book():
     except ValidationError as e:
         return jsonify({"error": e.errors()}), 400
 
+    # Handle author_ids
+    authors = []
+    if data.author_ids:
+        authors = Author.query.filter(Author.id.in_(data.author_ids)).all()
+        if len(authors) != len(data.author_ids):
+            return jsonify({"error": "Some authors not found"}), 404
+
     new_book = Book(
-        author=data.author,
         title=data.title,
         year=data.year,
         pages=data.pages,
         publisher=data.publisher,
         user_id=g.api_user_id,
+        authors=authors,
     )
+
     new_book.create()
+
     return jsonify(
         BookResponseSchema.model_validate(new_book.to_dict()).model_dump()
     ), 201
@@ -64,16 +74,30 @@ def get_book(book_id):
 def edit_book(book_id):
     book = Book.get_for_user(g.api_user_id, book_id)
     book = validate_book_access(book)
+
     try:
         data = BookUpdateSchema.model_validate(request.json)
     except ValidationError as e:
         return jsonify({"error": e.errors()}), 400
 
-    # update fields from request
-    for field, value in data.model_dump(exclude_unset=True).items():
+    payload = data.model_dump(exclude_unset=True)
+
+    # Handle author_ids
+    if "author_ids" in payload:
+        author_ids = payload.pop("author_ids")
+        authors = Author.query.filter(Author.id.in_(author_ids)).all()
+
+        if len(authors) != len(author_ids):
+            return jsonify({"error": "Some authors not found"}), 404
+
+        book.authors = authors
+
+    # Update other fields
+    for field, value in payload.items():
         setattr(book, field, value)
 
-    book.edit()  # update database
+    book.edit()
+
     return jsonify(
         BookResponseSchema.model_validate(book.to_dict()).model_dump()
     ), 200

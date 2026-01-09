@@ -1,33 +1,39 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, field_validator
+from typing import List
+
 
 class BookCreateSchema(BaseModel):
-    author: str = Field(..., min_length=2, max_length=255)
-    title: str = Field(..., min_length=1, max_length=255)
-    year: int = Field(..., ge=0, le=2100)
-    pages: int = Field(..., gt=0)
+    title: str
+    year: int
+    pages: int
     publisher: str | None = None
+    author_ids: List[int] = []
 
-    @field_validator("author", "title")
-    def strip_whitespace(cls, v: str) -> str:
+    @field_validator("title", "publisher")
+    def strip_whitespace(cls, v):
+        if v is None:
+            return v
         return v.strip()
 
 
 class BookUpdateSchema(BaseModel):
-    author: str | None = Field(None, min_length=2, max_length=255)
-    title: str | None = Field(None, min_length=1, max_length=255)
-    year: int | None = Field(None, ge=0, le=2100)
-    pages: int | None = Field(None, gt=0)
+    title: str | None = None
+    year: int | None = None
+    pages: int | None = None
     publisher: str | None = None
+    author_ids: List[int] | None = None
 
-    @field_validator("author", "title")
-    def strip_whitespace(cls, v: str) -> str:
-        return v.strip() if v else v
+    @field_validator("title", "publisher")
+    def strip_whitespace(cls, v):
+        if v is None:
+            return v
+        return v.strip()
 
 
 class BookResponseSchema(BaseModel):
     id: int
-    author: str
     title: str
     year: int
     pages: int
     publisher: str | None
+    authors: list  # list of dicts from Author.to_dict()

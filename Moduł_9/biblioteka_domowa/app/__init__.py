@@ -22,9 +22,13 @@ def create_app():
     # Register blueprints
     from .api.v2.users.views import users_bp
     from .api.v2.books.views import books_bp
+    from .api.v2.authors.views import authors_bp
+    from .api.v2.borrowings.views import borrow_bp
 
     app.register_blueprint(users_bp)
     app.register_blueprint(books_bp)
+    app.register_blueprint(authors_bp)
+    app.register_blueprint(borrow_bp)
 
     # Register web routes
     from .routes import register_routes

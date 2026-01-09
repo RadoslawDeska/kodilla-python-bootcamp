@@ -45,11 +45,91 @@ To configure the application, you need to set up the environment variables. Foll
     FLASK_BIBLIOTEKA_DOMOWA_API_ADMIN_SECRET_KEY  # Set your very secretive password to the API.
 
 ## Usage
-1. **Run the application:**
+1. **Run the application** (from the project root, where wsgi.py is located):
     ```bash
-    python -m app
+    flask run
     ```
 
-2. **Access the web application:** Open your browser and go to `http://127.0.0.1:5000`.
+2. **Access the web application:**
+    
+    Open your browser and go to `http://127.0.0.1:5000`.
 
-3. **API Documentation:** Refer to the API documentation for details on available endpoints and usage.
+3. **API access:**
+
+    All REST API v2 endpoints are available under `app/api/v2/`
+
+4. **Admin bootstrap (optional):**
+    
+    If no users exist, you can initialize the first admin user by providing the secret key defined in your .env file.
+
+## 📦 Database Migrations (Flask‑Migrate / Alembic)
+
+The application uses Flask‑Migrate (Alembic) to manage database schema changes.
+This ensures your database structure is versioned, reproducible, and safely upgradable without manually editing SQLite files.
+
+0. **Initialize migrations (only once)**
+    ```bash
+    flask db init
+    ```
+1. **Generate a new migration after modifying models**
+    ```bash
+    flask db migrate -m "describe your changes" 
+    ```
+2. **Apply migrations**
+    ```bash
+    flask db upgrade
+    ```
+3. **Rollback the last migration**
+    ```bash
+    flask db downgrade
+    ```
+    ⚠️ **Important:** Never edit app.db manually. Always use migrations to apply structural changes.
+
+
+## 🗂️ Project Structure
+
+The project follows a modular, scalable architecture based on Flask blueprints.
+
+Each feature (books, authors, borrowings, users) is isolated into its own package with separate models, validation schemas, and view controllers.
+
+```
+biblioteka_domowa/
+│
+├── app/
+│   ├── api/
+│   │   └── v2/
+│   │       ├── authors/
+│   │       │   ├── model.py            # SQLAlchemy models
+│   │       │   ├── validation.py       # Pydantic request/response schemas
+│   │       │   └── views.py            # Blueprint routes (CRUD)
+│   │       ├── books/
+│   │       │   ├── model.py
+│   │       │   ├── validation.py
+│   │       │   └── views.py
+│   │       ├── borrowings/
+│   │       │   ├── model.py
+│   │       │   ├── validation.py
+│   │       │   └── views.py
+│   │       └── users/
+│   │           ├── model.py
+│   │           ├── validation.py
+│   │           └── views.py
+│   │
+│   ├── extensions/
+│   │   └── db.py                       # SQLAlchemy initialization
+│   │
+│   ├── templates/                      # Jinja2 templates for the web UI
+│   ├── static/                         # CSS, JS, images
+│   ├── error_handling.py               # Centralized error handlers
+│   ├── routes.py                       # Web routes (non‑API)
+│   └── __init__.py                     # create_app() factory
+│
+├── migrations/                         # Alembic migration scripts
+│   ├── versions/
+│   └── env.py
+│
+├── wsgi.py                             # Entry point for Flask / WSGI servers
+├── requirements.txt
+├── example.env
+└── README.md
+```

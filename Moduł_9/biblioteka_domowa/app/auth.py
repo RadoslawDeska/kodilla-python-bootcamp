@@ -23,6 +23,9 @@ def web_login_required(fn):
 def api_login_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
+        print("DECORATOR SECRET_KEY:", current_app.config["SECRET_KEY"])
+        print("AUTH HEADER:", request.headers.get("Authorization"))
+
         auth = request.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
             abort(401)

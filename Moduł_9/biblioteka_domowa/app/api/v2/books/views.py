@@ -1,6 +1,7 @@
-from flask import Blueprint, abort, jsonify, request, g
+from flask import Blueprint, abort, g, jsonify, request
 from pydantic import ValidationError
 
+from app.api.v2.authors.model import Author
 from app.api.v2.books.validation import (
     BookCreateSchema,
     BookResponseSchema,
@@ -9,7 +10,6 @@ from app.api.v2.books.validation import (
 from app.auth import api_login_required
 
 from .model import Book
-from app.api.v2.books.model import Author
 
 books_bp = Blueprint("books", __name__, url_prefix="/api/v2/books")
 

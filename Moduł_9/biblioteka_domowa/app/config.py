@@ -43,3 +43,6 @@ class Config:
         "jpeg": "jpg",
         "tif": "tiff",
     }
+
+    print("ENV FILE:", env_file)
+    print("CONFIG ENV:", config_env)

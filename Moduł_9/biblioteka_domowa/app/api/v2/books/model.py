@@ -1,44 +1,23 @@
-from typing import List, Optional, Iterable, cast
-from datetime import datetime, timezone
+from typing import Iterable, List, Optional, cast
 
 from app.extensions.db import db
 
-
 # Association table for many-to-many Book <-> Author
 book_authors = db.Table(
-    'book_authors',
+    "book_authors",
     db.Column(
-        'book_id',
+        "book_id",
         db.Integer,
-        db.ForeignKey('books.id', name='fk_book_authors_book_id'),
-        primary_key=True
+        db.ForeignKey("books.id", name="fk_book_authors_book_id"),
+        primary_key=True,
     ),
     db.Column(
-        'author_id',
+        "author_id",
         db.Integer,
-        db.ForeignKey('authors.id', name='fk_book_authors_author_id'),
-        primary_key=True
+        db.ForeignKey("authors.id", name="fk_book_authors_author_id"),
+        primary_key=True,
     ),
 )
-
-
-class Author(db.Model):
-    __tablename__ = 'authors'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    bio = db.Column(db.Text, nullable=True)
-
-    books = db.relationship('Book', secondary=book_authors, back_populates='authors')
-
-    def __repr__(self):
-        return f"<Author {self.name}>"
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'bio': self.bio,
-        }
 
 
 class Book(db.Model):
@@ -54,13 +33,23 @@ class Book(db.Model):
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id", name="fk_books_user_id"),
-        nullable=False
+        nullable=False,
     )
     user = db.relationship("User", back_populates="books")
 
-    authors = db.relationship('Author', secondary=book_authors, back_populates='books')
+    authors = db.relationship(
+        "Author", secondary=book_authors, back_populates="books"
+    )
 
-    def __init__(self, title: str, year: int, pages: int, publisher: str | None = None, user_id: int = 0, authors: Optional[List[Author]] = None):
+    def __init__(
+        self,
+        title: str,
+        year: int,
+        pages: int,
+        publisher: str | None = None,
+        user_id: int = 0,
+        authors = None,  # `Optional[List[Author]]` type hint removed for testing
+    ):
         self.title = title
         self.year = year
         self.pages = pages
@@ -74,7 +63,7 @@ class Book(db.Model):
 
     @staticmethod
     def list_attrs():
-        return ['id', 'title', 'year', 'pages', 'publisher', 'is_on_shelf']
+        return ["id", "title", "year", "pages", "publisher", "is_on_shelf"]
 
     @staticmethod
     def all_for_user(user_id: int) -> List["Book"]:
@@ -108,43 +97,4 @@ class Book(db.Model):
             "publisher": self.publisher,
             "is_on_shelf": bool(self.is_on_shelf),
             "authors": [a.to_dict() for a in cast(Iterable, self.authors)],
-        }
-
-
-class Borrowing(db.Model):
-    __tablename__ = 'borrowings'
-    id = db.Column(db.Integer, primary_key=True)
-
-    book_id = db.Column(
-        db.Integer,
-        db.ForeignKey('books.id', name='fk_borrowings_book_id'),
-        nullable=False
-    )
-
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.id', name='fk_borrowings_user_id'),
-        nullable=True
-    )
-
-    borrower_name = db.Column(db.String(255), nullable=True)
-    borrowed_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    due_date = db.Column(db.DateTime, nullable=True)
-    returned_at = db.Column(db.DateTime, nullable=True)
-
-    book = db.relationship('Book', backref=db.backref('borrowings', lazy='dynamic'))
-
-    def __repr__(self):
-        who = self.borrower_name or f'user:{self.user_id}'
-        return f"<Borrowing {self.book_id} by {who}>"
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'book_id': self.book_id,
-            'user_id': self.user_id,
-            'borrower_name': self.borrower_name,
-            'borrowed_at': self.borrowed_at.isoformat() if self.borrowed_at else None,
-            'due_date': self.due_date.isoformat() if self.due_date else None,
-            'returned_at': self.returned_at.isoformat() if self.returned_at else None,
         }

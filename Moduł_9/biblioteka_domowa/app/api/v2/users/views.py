@@ -42,6 +42,8 @@ def bootstrap_admin():
 
 @users_bp.route("/login", methods=["POST"])
 def api_login():  # everyone can log in after registration through WEB interface
+    print("LOGIN SECRET_KEY:", current_app.config["SECRET_KEY"])
+
     data = request.get_json()
     if not data:
         abort(400)

@@ -1,15 +1,15 @@
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, abort, g, jsonify, request
+from .model import Author
 from pydantic import ValidationError
-from flask import g
 
-from app.api.v2.books.model import Author
-from .validation import (
-    AuthorCreateSchema,
-    AuthorUpdateSchema,
-    AuthorResponseSchema,
-)
 from app.auth import api_login_required
 from app.extensions.db import db
+
+from .validation import (
+    AuthorCreateSchema,
+    AuthorResponseSchema,
+    AuthorUpdateSchema,
+)
 
 authors_bp = Blueprint("authors", __name__, url_prefix="/api/v2/authors")
 
@@ -33,7 +33,9 @@ def create_author():
     db.session.add(author)
     db.session.commit()
 
-    return jsonify(AuthorResponseSchema.model_validate(author.to_dict()).model_dump()), 201
+    return jsonify(
+        AuthorResponseSchema.model_validate(author.to_dict()).model_dump()
+    ), 201
 
 
 @authors_bp.route("/<int:author_id>", methods=["GET"])

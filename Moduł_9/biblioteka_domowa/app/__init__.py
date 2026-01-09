@@ -8,9 +8,14 @@ from flask_migrate import Migrate
 migrate = Migrate()
 
 
-def create_app():
+def create_app(testing=False):
     app = Flask(__name__)
     app.config.from_object(Config)
+    
+    if testing:
+        app.config["TESTING"] = True
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        app.config["WTF_CSRF_ENABLED"] = False
 
     # Init extensions
     db.init_app(app)

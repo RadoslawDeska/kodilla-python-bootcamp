@@ -128,6 +128,13 @@ biblioteka_domowa/
 │   ├── versions/
 │   └── env.py
 │
+├── tests/
+│   ├── conftest.py                     # Pytest fixtures
+│   ├── test_auth.py                    # Authentication tests
+│   ├── test_books.py                   # Book management tests
+│   ├── test_users.py                   # User management tests
+│   └── test_borrowings.py              # Borrowing management tests
+|
 ├── wsgi.py                             # Entry point for Flask / WSGI servers
 ├── requirements.txt
 ├── example.env
